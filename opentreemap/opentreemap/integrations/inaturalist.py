@@ -3,6 +3,7 @@ import datetime
 import time
 import logging
 
+from collections import Counter
 from celery import shared_task, chord
 import requests
 from django.conf import settings
@@ -13,6 +14,7 @@ from treemap.models import INaturalistObservation, Species, MapFeaturePhotoLabel
 from treemap.lib.map_feature import get_map_feature_or_404
 
 base_url = settings.INATURALIST_URL
+api_url = settings.INATURALIST_API_URL
 
 
 def get_inaturalist_auth_token():
@@ -31,6 +33,23 @@ def get_inaturalist_auth_token():
     )
     token = r.json()['access_token']
     return token
+
+
+def get_inaturalist_jwt(token=None):
+    if not token:
+        token = get_inaturalist_auth_token()
+
+    headers = {'Authorization': 'Bearer {}'.format(token)}
+
+    response = requests.get(
+        url="{base_url}/users/api_token".format(base_url=base_url),
+        headers=headers
+    )
+
+    if not response.ok:
+        raise Exception('Could not authenticate to get a JWT')
+
+    return response.json()['api_token']
 
 
 def set_observation_to_captive(token, observation_id):
@@ -94,18 +113,162 @@ def add_photo_to_observation(token, observation_id, photo):
     return response.json()
 
 
+def match_species(common_name, species_name, species_map):
+    """
+    Rules to match iNaturalist species to OTM species names
+    """
+    common_name = common_name.lower()
+    common_name_map = {
+        'london plane': 'london planetree'
+    }
+    common_name = common_name_map.get(common_name, common_name)
+
+    species = species_map.get(common_name)
+
+    if species is None:
+        _species_name = species_name.lower()
+        species_by_species_name = [s for s in species_map.values()
+            if _species_name == '{} {}'.format(s.genus, s.species).lower()]
+        if len(species_by_species_name) == 1:
+            species = species_by_species_name[0]
+    return species
+
+
 def sync_identifications():
     """
     Goes through all unidentified observations and updates them with taxonomy on iNaturalist
     """
-    o9n_models = INaturalistObservation.objects.filter(is_identified=False)
+    logger = logging.getLogger('iNaturalist')
+    # a map of common name to the actual species
+    species_map = {s.common_name.lower(): s for s in Species.objects.all()}
 
-    observations = get_all_observations()
+    o9n_models = {o.observation_id: o for o in INaturalistObservation.objects.filter(is_identified=False)}
+    observation_ids = get_all_observation_ids(identifications='most_agree', hrank='species')
 
+    # these are the observations we can work with
+    potential_observation_ids = set(observation_ids).intersection(
+        set(o9n_models.keys()))
+
+    found_identifications = []
+    for observation_id in list(potential_observation_ids)[:100]:
+        observation = get_observation_by_id(observation_id)
+        if not observation:
+            continue
+        species_guess = observation['species_guess']
+        identifications = observation['identifications']
+
+        species_name_counter = Counter([i['taxon']['name'] for i in identifications])
+
+        # if the top 2 have the same count, then we can't pick a mostly agree
+        if (len(identifications) < 2
+            # this is true if the top 2 counts have the same number
+            or len(set([count for _, count in species_name_counter.most_common(2)])) != len(species_name_counter)):
+            logger.info('More than one most common species for observation_id {}. Skipping'.format(observation_id))
+            continue
+
+        species_name, _ = species_name_counter.most_common(1)[0]
+        try:
+            common_name, _ = Counter([i['taxon']['preferred_common_name'] for i in identifications]).most_common()[0]
+        except:
+            import ipdb; ipdb.set_trace() # BREAKPOINT
+            pass
+
+        species = match_species(common_name, species_name, species_map)
+        if not species:
+            logger.error('Cannot find species {}; common name {}'.format(species_name, common_name))
+            continue
+
+        found_identifications.append((observation_id, species))
+        time.sleep(1)
+
+
+    import ipdb; ipdb.set_trace() # BREAKPOINT
     for o9n_model in o9n_models:
         taxonomy = observations.get(o9n_model.observation_id)
         if taxonomy:
             _set_identification(o9n_model, taxonomy)
+
+
+def can_trust_user(user):
+    """
+    We can trust a user if we have the user in our list
+    of trusted users or if the user has over 1k identifications
+    """
+    return True
+
+
+def get_validated_species_info(inaturalist_observation):
+    """
+    Using the raw json from iNaturalist, we want to check if we can use this
+    as a valid identification
+
+    Some rules:
+        - At least 3 identifications
+
+    FIXME: What to do about num_identifications_disagreements?
+
+    Returns None if the validation is no good
+    """
+    if inaturalist_observation.get('identifications_count', 0) < 3:
+        return None
+
+    inaturalist_identifications = inaturalist_observation['identifications']
+    taxons = [
+        #'user': i['user'],
+        i['taxon'] for i in inaturalist_identifications
+        if can_trust_user(i['user'])]
+
+    # check that the majority agree
+    taxon_counter = Counter([t['name'] for t in taxons])
+    taxon_most_common = taxon_counter.most_common()
+
+    # if we have multiple, and the most common one has the same
+    # count as the second most common one, then we do not have a majority
+    if len(taxon_counter) > 1 and taxon_most_common[0][1] == taxon_most_common[1][1]:
+        return None
+
+    taxon = [t for t in taxons
+            if t['name'] == taxon_most_common[0][0]][0]
+    genus, species = taxon.split(' ')
+    return {
+        'genus': genus,
+        'species': species,
+        'common_name': taxon['preferred_common_name']
+    }
+
+
+def get_all_observation_ids(**kwargs):
+    jwt = get_inaturalist_jwt()
+
+    headers = {'Authentication': jwt}
+    ids = []
+    page = 1
+    while(True):
+        arguments = {
+            "user_login": settings.INATURALIST_USERNAME,
+            "only_id": "true",
+            "per_page": "200",
+            "page": "{page}".format(page=page)
+        }
+        if kwargs:
+            arguments.update(kwargs)
+
+        args = "&".join(["{}={}".format(key, value) for key, value in arguments.items()])
+
+        url = "{base_url}/observations?{args}".format(base_url=api_url, args=args)
+        response = requests.get(
+            url=url,
+            headers=headers
+        )
+
+        results = response.json()['results']
+        if not results:
+            break
+
+        ids.extend([result['id'] for result in results])
+        page += 1
+
+    return ids
 
 
 def get_all_observations():
@@ -155,7 +318,7 @@ def get_o9n(o9n_id):
     ).json()
 
 
-def _set_identification(o9n_model, taxon):
+def _set_identification(o9n_model, species):
     o9n_model.tree.species = Species(common_name=taxon['taxon']['common_name']['name'])
     o9n_model.identified_at = dateutil.parser.parse(taxon['updated_at'])
     o9n_model.is_identified = True

@@ -66,6 +66,11 @@ class TestINaturalist(OTMTestCase):
         get_o9n_mock.assert_called_once_with(o9n_id)
         self.assertEqual(INaturalistObservation.objects.filter(is_identified=False).count(), 0)
 
+    def test_get_observation(self):
+        o9n_id = 1
+        observation = fixtures.get_inaturalist_observation(o9n_id)
+        inaturalist.get_validated_observation_by_id(observation)
+
 
 class TestINaturalistPost(OTMTestCase):
     """
