@@ -1,5 +1,6 @@
 import dateutil.parser
 import datetime
+import itertools
 import time
 import logging
 
@@ -9,12 +10,33 @@ import requests
 from django.conf import settings
 from django.db import connection
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
-from treemap.models import INaturalistObservation, Species, MapFeaturePhotoLabel, INaturalistPhoto
+from treemap.models import INaturalistObservation, Species, MapFeaturePhotoLabel, INaturalistPhoto, INaturalistSpecies, INaturalistIdentification, User
 from treemap.lib.map_feature import get_map_feature_or_404
 
 base_url = settings.INATURALIST_URL
 api_url = settings.INATURALIST_API_URL
+
+
+def n_at_a_time(n, iterable, fillvalue=None):
+    """
+    Returns an iterator yielding `n` elements at a time.
+    :param n: the number of elements to return at each iteration
+    :param iterable: the iterable over which to iterate
+    :param fillvalue: the value to use for missing elements
+    :Example:
+    >>> for (a,b,c) in natatime(3, [1,2,3,4,5], fillvalue = "?"):
+    ...   print a, b, c
+    ...
+    1 2 3
+    4 5 ?
+
+    Credit: https://gist.github.com/pilcrow/8b6af7e35f5d19de7702d77446461b02
+    """
+    stepped_slices = ( itertools.islice(iterable, i, None, n) for i in xrange(n) )
+    return itertools.izip_longest(*stepped_slices, fillvalue = fillvalue)
 
 
 def get_inaturalist_auth_token():
@@ -75,24 +97,31 @@ def set_observation_to_captive(token, observation_id):
 
 
 def create_observation(token, latitude, longitude, species):
-
+    """
+    This uses the old API
+    """
     headers = {'Authorization': 'Bearer {}'.format(token)}
-    params = {'observation': {
+    params = {
         'observed_on_string': datetime.datetime.now().isoformat(),
         'latitude': latitude,
         'longitude': longitude,
-        'species_guess': species
     }
-    }
+
+    try:
+        inaturalist_observation_species = INaturalistSpecies.objects.get(
+            species=species
+        )
+        params['taxon_id'] = inaturalist_observation_species.inaturalist_id
+    except ObjectDoesNotExist:
+        params['species_guess'] = species
 
     response = requests.post(
         url="{base_url}/observations.json".format(base_url=base_url),
-        json=params,
+        json={'observation': params},
         headers=headers
     )
 
     observation = response.json()[0]
-
     set_observation_to_captive(token, observation['id'])
 
     return observation
@@ -272,6 +301,60 @@ def get_all_observation_ids(**kwargs):
 
 
 def get_all_observations():
+    observations = INaturalistObservation.objects.filter(is_identified=False)
+    observations_and_inaturalist = get_all_observations(observations)
+
+    for (observation, inaturalist_observation) in observations_and_inaturalist:
+        inaturalist_validated = get_validated_species_info(inaturalist_observation)
+        if inaturalist_validated is None:
+            logger.info('No validated identifications')
+            continue
+
+        try:
+            inaturalist_observation_species = INaturalistSpecies.objects.get(
+                species=observation.tree.species
+            )
+        except Exception as e:
+            pass
+
+        try:
+            identified_species = get_inaturalist_species(inaturalist_validated['inaturalist_id'])
+        except Exception as e:
+            continue
+
+        if not identified_species:
+            logger.info('No identified species')
+            continue
+
+        species_original = observation.tree.species
+        user = User.objects.get(id=2)
+
+        with transaction.atomic():
+            # set the correct crowd-sourced species
+            if observation.tree.species.id != identified_species.species.id:
+                observation.tree.species = identified_species.species
+
+            observation.is_identified = True
+            observation.identified_at = datetime.datetime.now()
+
+            inaturalist_identification = INaturalistIdentification(
+                observation=observation,
+                species=identified_species.species,
+                species_original=species_original,
+                inaturalist_species=identified_species,
+                identified_at=datetime.datetime.now()
+            )
+            observation.save()
+            observation.tree.save_with_user(user)
+            inaturalist_identification.save()
+
+        pass
+
+
+    import ipdb; ipdb.set_trace() # BREAKPOINT
+
+
+def _get_all_observations_old():
     """
     Retrieve iNaturalist observation by ID
     API docs: https://www.inaturalist.org/pages/api+reference#get-observations-id
@@ -305,17 +388,100 @@ def get_all_observations():
     return {d['id']: {'updated_at': d['updated_at'], 'taxon': d['taxon']} for d in all_data}
 
 
-def get_o9n(o9n_id):
+def can_trust_user(user):
     """
-    Retrieve iNaturalist observation by ID
-    API docs: https://www.inaturalist.org/pages/api+reference#get-observations-id
-    :param o9n_id: observation ID
-    :return: observation JSON as a dict
+    We can trust a user if we have the user in our list
+    of trusted users or if the user has over 1k identifications
     """
-    return requests.get(
-        url="{base_url}/observations/{o9n_id}.json".format(
-            base_url=base_url, o9n_id=o9n_id)
-    ).json()
+    return user['login'] != 'sustainablejc'
+
+
+def get_inaturalist_species(inaturalist_id):
+    species = INaturalistSpecies.objects.filter(inaturalist_id=inaturalist_id).all()
+    if not species:
+        raise Exception('No valid iNaturalist species')
+    if len(species) > 1:
+        species = [s for s in species if s.species.cultivar == '']
+
+        if not species:
+            raise Exception('No valid iNaturalist species')
+        if len(species) > 1:
+            raise Exception('More than one possible iNaturalist species')
+    return species[0]
+
+
+def get_validated_species_info(inaturalist_observation):
+    """
+    Using the raw json from iNaturalist, we want to check if we can use this
+    as a valid identification
+
+    Some rules:
+        - At least 3 identifications
+
+    FIXME: What to do about num_identifications_disagreements?
+
+    Returns None if the validation is no good
+    """
+    if inaturalist_observation.get('identifications_count', 0) < 2:
+        return None
+
+    inaturalist_identifications = inaturalist_observation['identifications']
+    taxons = [
+        #'user': i['user'],
+        i['taxon'] for i in inaturalist_identifications
+        if can_trust_user(i['user'])]
+
+    # check that the majority agree
+    taxon_counter = Counter([t['name'] for t in taxons])
+    taxon_most_common = taxon_counter.most_common()
+
+    # if we have multiple, and the most common one has the same
+    # count as the second most common one, then we do not have a majority
+    if len(taxon_counter) > 1 and taxon_most_common[0][1] == taxon_most_common[1][1]:
+        return None
+
+    taxon = [t for t in taxons
+            if t['name'] == taxon_most_common[0][0]][0]
+    try:
+        genus, species = taxon['name'].split(' ')
+    except:
+        #import ipdb; ipdb.set_trace() # BREAKPOINT
+        return None
+    return {
+        'inaturalist_id': taxon['id'],
+        'genus': genus,
+        'species': species,
+        'common_name': taxon['preferred_common_name']
+    }
+
+
+def get_all_observations(observations):
+    #https://api.inaturalist.org/v1/observations?identified=true&id=53100544%2C61572438%2C50102278%2C48087047%2C54873477%2C47689686%2C56537169%2C51379977%2C48873229%2C48414478%2C62119695%2C60899089%2C54689554&rank=species&identifications=most_agree&order=desc&order_by=created_at
+
+    for chunk in n_at_a_time(200, observations):
+        observation_dict = {c.observation_id: c for c in chunk if c}
+        params = {
+            'identified': True,
+            'id': ','.join([str(i) for i in observation_dict.keys()]),
+            'hrank': 'species',
+            'identifications': 'most_agree',
+            'order': 'desc',
+            'order_by': 'created_at'
+        }
+        res = requests.get(
+            '{}/observations'.format(api_url),
+            params=params
+        )
+        if not res.ok:
+            import ipdb; ipdb.set_trace() # BREAKPOINT
+            continue
+
+        results = res.json()['results']
+
+        for result in results:
+            yield (observation_dict[result['id']], result)
+
+        time.sleep(5)
 
 
 def _set_identification(o9n_model, species):
@@ -398,7 +564,7 @@ def create_observations(instance, tree_id=None):
             token,
             latitude,
             longitude,
-            tree.species.common_name
+            tree.species
         )
         observation = INaturalistObservation(
             observation_id=_observation['id'],
@@ -423,3 +589,53 @@ def create_observations(instance, tree_id=None):
         time.sleep(30)
 
     logger.info('Finished creating observations')
+
+
+def get_species(species, rank='species'):
+    if species.species == '' and rank == 'species':
+        return None
+
+    try:
+        search_term = '{} {}'.format(species.genus, species.species).strip()
+        req = requests.get(
+            '{}/taxa'.format(api_url),
+            params={
+                'q': search_term,
+                'is_active': True,
+                'rank': rank}
+            )
+        if not req.ok:
+            import ipdb; ipdb.set_trace() # BREAKPOINT
+            raise Exception('Problem getting species information')
+
+        results = req.json()['results']
+        species_matches = [r for r in results
+            if (r.get('preferred_common_name', '').lower() == species.common_name.lower()
+                or r['name'].lower() == search_term.lower())]
+
+        if len(species_matches) > 1:
+            raise Exception('More than 1 matching species')
+
+        if len(species_matches) == 0:
+            return None
+
+        species_match = species_matches[0]
+        name_parts = species_match['name'].split()
+        genus = name_parts[0]
+        species_name = None
+
+        if len(name_parts) > 1:
+            species_name = name_parts[1]
+
+        return INaturalistSpecies(
+            inaturalist_id = species_match['id'],
+            preferred_common_name = species_match.get('preferred_common_name'),
+            genus = genus,
+            species_name = species_name,
+            name = species_match['name'],
+            species = species
+        )
+    except Exception as e:
+        import ipdb; ipdb.set_trace() # BREAKPOINT
+        pass
+

@@ -1562,9 +1562,39 @@ class INaturalistObservation(models.Model):
             observation_id=self.observation_id
         )
 
+
 class INaturalistPhoto(models.Model):
     tree_photo = models.ForeignKey(TreePhoto)
     observation = models.ForeignKey(INaturalistObservation)
     inaturalist_photo_id = models.IntegerField()
 
 
+class INaturalistSpecies(models.Model):
+    """
+    Keep track of a mapping between iNaturalist species and our species
+    in case we need any overrides
+    """
+    inaturalist_id = models.IntegerField()
+
+    preferred_common_name =  models.CharField(max_length=100)
+    genus =  models.CharField(max_length=100)
+    species_name =  models.CharField(max_length=100)
+    # genus and species with no changes
+    name =  models.CharField(max_length=100)
+    species = models.ForeignKey(Species, null=True, blank=True,
+                                verbose_name=_("Species"))
+
+
+class INaturalistIdentification(models.Model):
+    """
+    Information for successful identifications of iNaturalist species
+    """
+    observation = models.ForeignKey(INaturalistObservation)
+
+    species = models.ForeignKey(Species, null=True, blank=True,
+                                verbose_name=_("Species"))
+    species_original  = models.ForeignKey(Species, null=True, blank=True,
+                                verbose_name=_("Species Original"),
+                                related_name='species_original')
+    inaturalist_species = models.ForeignKey(INaturalistSpecies)
+    identified_at = models.DateTimeField(null=True)
