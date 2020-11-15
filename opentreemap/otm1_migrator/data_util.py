@@ -150,6 +150,7 @@ def create_udfs(udfs, instance):
 
             name = field_rules['udf.name']
             model_type = to_model_name(model)
+            import ipdb; ipdb.set_trace() # BREAKPOINT
             choices = field_rules.get('udf.choices')
             datatype_type = field_rules.get(
                 'udf.type', 'choice' if choices else 'string')

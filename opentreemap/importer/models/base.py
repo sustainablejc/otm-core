@@ -41,8 +41,8 @@ class GenericImportEvent(models.Model):
     field_order = models.TextField(default='')
 
     # Metadata about this particular import
-    owner = models.ForeignKey(User)
-    instance = models.ForeignKey(Instance)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now=True)
     completed = models.DateTimeField(null=True, blank=True)
 

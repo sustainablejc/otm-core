@@ -12,7 +12,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.core.paginator import Paginator, Page, EmptyPage
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
 

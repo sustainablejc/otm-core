@@ -8,7 +8,7 @@ from unittest.case import skip
 from django.test.client import RequestFactory
 from django.core.exceptions import (FieldError, ValidationError,
                                     ObjectDoesNotExist)
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.db import IntegrityError, connection
 from django.contrib.gis.geos import Point

@@ -39,7 +39,7 @@ class TreeImportEvent(GenericImportEvent):
     def row_set(self):
         return self.treeimportrow_set
 
-    def __unicode__(self):
+    def __str__(self):
         return _('Tree Import #%s') % self.pk
 
     def get_udf_column_name(self, udf_def):
@@ -112,10 +112,10 @@ class TreeImportRow(GenericImportRow):
     }
 
     # plot that was created from this row
-    plot = models.ForeignKey(Plot, null=True, blank=True)
+    plot = models.ForeignKey(Plot, on_delete=models.CASCADE, null=True, blank=True)
 
     # The main import event
-    import_event = models.ForeignKey(TreeImportEvent)
+    import_event = models.ForeignKey(TreeImportEvent, on_delete=models.CASCADE)
 
     class Meta:
         app_label = 'importer'

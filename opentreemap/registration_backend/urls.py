@@ -1,6 +1,6 @@
 from django.conf.urls import include
 from django.conf.urls import url
-from django.contrib.auth.views import login
+from django.contrib.auth import login
 from django.views.generic.base import TemplateView
 
 

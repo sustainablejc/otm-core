@@ -57,7 +57,7 @@ def users_json(request, instance):
 ############################################
 
 def begin_export_users(request, instance, data_format):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise Http404()
 
     if not instance.feature_enabled('exports'):
@@ -87,7 +87,7 @@ def begin_export(request, instance, model):
     job = ExportJob(instance=instance,
                     description='csv export of %s' % model)
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         job.user = request.user
     job.save()
 

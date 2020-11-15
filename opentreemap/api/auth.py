@@ -52,11 +52,7 @@ def get_signature_for_request(request, secret_key):
         binary_secret_key = secret_key
 
     sig = base64.b64encode(
-        hmac.new(
-            binary_secret_key,
-            sign_string.encode(),
-            hashlib.sha256
-        ).digest()
+        hmac.new(binary_secret_key, sign_string.encode(), hashlib.sha256).digest()
     )
 
     if sig is None:

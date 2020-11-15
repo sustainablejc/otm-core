@@ -22,6 +22,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='bounds_obj',
-            field=models.OneToOneField(null=True, blank=True, to='treemap.InstanceBounds'),
+            field=models.OneToOneField(on_delete=models.CASCADE, null=True, blank=True, to='treemap.InstanceBounds'),
         ),
     ]

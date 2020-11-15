@@ -17,11 +17,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='enhancedthreadedcommentflag',
             name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(on_delete=models.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='enhancedthreadedcomment',
             name='instance',
-            field=models.ForeignKey(to='treemap.Instance'),
+            field=models.ForeignKey(on_delete=models.CASCADE, to='treemap.Instance'),
         ),
     ]

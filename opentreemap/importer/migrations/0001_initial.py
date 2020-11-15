@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                 ('finished', models.BooleanField(default=False)),
                 ('errors', models.TextField(default='')),
                 ('status', models.IntegerField(default=3)),
-                ('import_event', models.ForeignKey(to='importer.TreeImportEvent')),
+                ('import_event', models.ForeignKey(on_delete=models.CASCADE, to='importer.TreeImportEvent')),
             ],
         ),
     ]

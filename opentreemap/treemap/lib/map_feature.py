@@ -5,7 +5,7 @@ import datetime
 from string import Template
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -384,7 +384,7 @@ def context_dict_for_map_feature(request, feature, edit=False):
     feature.instance = instance  # save a DB lookup
 
     user = request.user
-    if user and user.is_authenticated():
+    if user and user.is_authenticated:
         favorited = Favorite.objects \
             .filter(map_feature=feature, user=user).exists()
     else:
@@ -394,7 +394,7 @@ def context_dict_for_map_feature(request, feature, edit=False):
     # which prevents the Favorite query above from ever returning
     # True. To avoid that we need to do the field masking after
     # setting the favorited flag.
-    if user and user.is_authenticated():
+    if user and user.is_authenticated:
         feature.mask_unauthorized_fields(user)
 
     feature.convert_to_display_units()

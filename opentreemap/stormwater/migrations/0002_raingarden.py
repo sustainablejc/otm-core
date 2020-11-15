@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='RainGarden',
             fields=[
-                ('polygonalmapfeature_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='stormwater.PolygonalMapFeature')),
+                ('polygonalmapfeature_ptr', models.OneToOneField(on_delete=models.CASCADE, parent_link=True, auto_created=True, primary_key=True, serialize=False, to='stormwater.PolygonalMapFeature')),
             ],
             options={
                 'abstract': False,

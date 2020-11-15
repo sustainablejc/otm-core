@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(null=True, blank=True)),
                 ('modified', models.DateTimeField(null=True, blank=True)),
                 ('description', models.CharField(max_length=255)),
-                ('instance', models.ForeignKey(to='treemap.Instance')),
-                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+                ('instance', models.ForeignKey(on_delete=models.CASCADE, to='treemap.Instance')),
+                ('user', models.ForeignKey(on_delete=models.CASCADE, blank=True, to=settings.AUTH_USER_MODEL, null=True)),
             ],
         ),
     ]

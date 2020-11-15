@@ -58,7 +58,6 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.gis.db import models
@@ -161,11 +160,11 @@ class UserDefinedCollectionValue(UserTrackable, models.Model):
     particular collection field. We audit all of the fields on this
     object and expand the audits in the same way that scalar udfs work.
     """
-    field_definition = models.ForeignKey('UserDefinedFieldDefinition')
+    field_definition = models.ForeignKey('UserDefinedFieldDefinition', on_delete=models.CASCADE)
     model_id = models.IntegerField()
     data = HStoreField()
 
-    def __unicode__(self):
+    def __str__(self):
         return repr(self.data)
 
     def __init__(self, *args, **kwargs):
@@ -355,7 +354,7 @@ class UserDefinedFieldDefinition(models.Model):
     """
     The instance that this field is bound to
     """
-    instance = models.ForeignKey(Instance)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
 
     """
     The type of model that this should bind to
@@ -402,7 +401,7 @@ class UserDefinedFieldDefinition(models.Model):
     class Meta:
         unique_together = ('instance', 'model_type', 'name')
 
-    def __unicode__(self):
+    def __str__(self):
         return ('%s.%s%s' %
                 (self.model_type, self.name,
                  ' (collection)' if self.iscollection else ''))
@@ -866,16 +865,16 @@ class UserDefinedFieldDefinition(models.Model):
         datatype = dtd['type']
 
         if datatype == 'date':
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 return value
             elif isinstance(value, datetime):
                 return value.strftime(DATETIME_FORMAT)
         elif isinstance(value, bool):
             return force_text(value).lower()
-        elif isinstance(value, six.integer_types + (float, Decimal)):
+        elif isinstance(value, (int, float, Decimal)):
             return force_text(value)
         # Order matters. Strings are Iterable.
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             return value
         elif isinstance(value, Iterable):
             return force_text(json.dumps(value, cls=DecimalEncoder))
@@ -1043,7 +1042,7 @@ class UDFPostgresField(HStoreField):
         if not isinstance(self.default, UDFDictionary):
             self.default = UDFDictionary
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return UDFDictionary(value)
 
     def to_python(self, value):
@@ -1054,7 +1053,7 @@ class UDFPostgresField(HStoreField):
         if isinstance(value, UDFDictionary):
             return value
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = super(UDFPostgresField, self).to_python(value)
 
         if value is None:

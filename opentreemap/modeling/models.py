@@ -11,8 +11,8 @@ from treemap.json_field import JSONField
 
 class Plan(models.Model):
     revision = models.IntegerField(default=0)
-    instance = models.ForeignKey(Instance)
-    owner = models.ForeignKey(User)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.TextField()
     description = models.TextField(blank=True)
     is_published = models.BooleanField(default=False)
@@ -51,5 +51,5 @@ class Plan(models.Model):
     def clean(self):
         pass
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name

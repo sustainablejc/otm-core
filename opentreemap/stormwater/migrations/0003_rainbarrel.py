@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='RainBarrel',
             fields=[
-                ('mapfeature_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='treemap.MapFeature')),
+                ('mapfeature_ptr', models.OneToOneField(on_delete=models.CASCADE, parent_link=True, auto_created=True, primary_key=True, serialize=False, to='treemap.MapFeature')),
                 ('capacity', models.FloatField(help_text='Capacity')),
             ],
             options={

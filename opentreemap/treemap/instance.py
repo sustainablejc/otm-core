@@ -15,6 +15,9 @@ from django.db import transaction
 from django.db.models import F
 from django.utils.translation import ugettext_lazy as _
 
+# these are all built-in directly to Django
+from django.db.models import Manager as GeoManager
+
 import hashlib
 import json
 from urllib.parse import urlencode
@@ -126,7 +129,7 @@ def get_instance_permission_spec(instance=None):
 class InstanceBounds(models.Model):
     """ Center of the map when loading the instance """
     geom = models.MultiPolygonField(srid=3857)
-    objects = models.GeoManager()
+    objects = GeoManager()
 
     @classmethod
     def create_from_point(cls, x, y, half_edge=50000):
@@ -252,7 +255,9 @@ class Instance(models.Model):
     eco_rev = models.IntegerField(default=_DEFAULT_REV)
 
     eco_benefits_conversion = models.ForeignKey(
-        'BenefitCurrencyConversion', null=True, blank=True)
+        'BenefitCurrencyConversion',
+        on_delete=models.CASCADE,
+        null=True, blank=True)
 
     """ Center of the map when loading the instance """
     bounds = models.OneToOneField(InstanceBounds,
@@ -265,7 +270,7 @@ class Instance(models.Model):
     """
     center_override = models.PointField(srid=3857, null=True, blank=True)
 
-    default_role = models.ForeignKey('Role', related_name='default_role')
+    default_role = models.ForeignKey('Role', on_delete=models.CASCADE, related_name='default_role')
 
     users = models.ManyToManyField('User', through='InstanceUser')
 
@@ -305,9 +310,9 @@ class Instance(models.Model):
     canopy_boundary_category = models.CharField(max_length=255, default='',
                                                 blank=True)
 
-    objects = models.GeoManager()
+    objects = GeoManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def _make_config_property(prop, default=None):

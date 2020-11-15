@@ -93,7 +93,7 @@ def instances_closest_to_point(request, lat, lng):
     """
     user = request.user
     user_instance_ids = []
-    if user and not user.is_anonymous():
+    if user and not user.is_anonymous:
         user_instance_ids = InstanceUser.objects.filter(user=user)\
                                         .values_list('instance_id', flat=True)\
                                         .distinct()

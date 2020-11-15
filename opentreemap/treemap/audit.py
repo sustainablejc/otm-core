@@ -15,7 +15,7 @@ from django.utils.dateformat import format as dformat
 from django.dispatch import receiver
 from django.db import models as django_models
 from django.db.models.signals import post_save, post_delete
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.conf import settings
@@ -661,7 +661,7 @@ class UserTrackable(Dictable):
             instance = self.get_instance()
         except AuthorizeException:
             return False
-        if not user or not user.is_authenticated():
+        if not user or not user.is_authenticated:
             return False
         return user.get_role(instance).name == Role.ADMINISTRATOR
 
@@ -706,8 +706,8 @@ class UserTrackable(Dictable):
 class FieldPermission(models.Model):
     model_name = models.CharField(max_length=255)
     field_name = models.CharField(max_length=255)
-    role = models.ForeignKey('Role')
-    instance = models.ForeignKey('Instance')
+    role = models.ForeignKey('Role', on_delete=models.CASCADE)
+    instance = models.ForeignKey('Instance', on_delete=models.CASCADE)
 
     NONE = 0
     READ_ONLY = 1
@@ -723,7 +723,7 @@ class FieldPermission(models.Model):
     class Meta:
         unique_together = ('model_name', 'field_name', 'role', 'instance')
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s.%s - %s - %s" % (self.model_name,
                                     self.field_name,
                                     self.role,
@@ -784,7 +784,7 @@ post_delete.connect(invalidate_adjuncts, sender=FieldPermission)
 
 class RoleManager(models.Manager):
     def get_role(self, instance, user=None):
-        if user is None or user.is_anonymous():
+        if user is None or user.is_anonymous:
             return instance.default_role
         return user.get_role(instance)
 
@@ -797,7 +797,7 @@ class Role(models.Model):
     objects = RoleManager()
 
     name = models.CharField(max_length=255)
-    instance = models.ForeignKey('Instance', null=True, blank=True)
+    instance = models.ForeignKey('Instance', on_delete=models.CASCADE, null=True, blank=True)
 
     default_permission_level = models.IntegerField(
         db_column='default_permission',
@@ -852,7 +852,7 @@ class Role(models.Model):
             qs = qs.filter(content_type=content_type)
         return qs.exists()
 
-    def __unicode__(self):
+    def __str__(self):
         return '{} ({})'.format(self.name, self.pk)
 
 
@@ -1312,13 +1312,13 @@ class Audit(models.Model):
     model = models.CharField(max_length=255, null=True, db_index=True)
     model_id = models.IntegerField(null=True, db_index=True)
     instance = models.ForeignKey(
-        'Instance', null=True, blank=True, db_index=True)
+        'Instance', on_delete=models.CASCADE, null=True, blank=True, db_index=True)
 
     field = models.CharField(max_length=255, null=True)
     previous_value = models.TextField(null=True)
     current_value = models.TextField(null=True, db_index=True)
 
-    user = models.ForeignKey('treemap.User')
+    user = models.ForeignKey('treemap.User', on_delete=models.CASCADE)
     action = models.IntegerField()
 
     """
@@ -1354,7 +1354,7 @@ class Audit(models.Model):
             self.current_value = json.dumps(self.current_value)
 
     requires_auth = models.BooleanField(default=False)
-    ref = models.ForeignKey('Audit', null=True)
+    ref = models.ForeignKey('Audit', on_delete=models.CASCADE, null=True)
 
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now=True, db_index=True)
@@ -1574,7 +1574,7 @@ class Audit(models.Model):
                 'ref': self.ref.pk if self.ref else None,
                 'created': str(self.created)}
 
-    def __unicode__(self):
+    def __str__(self):
         return "pk=%s - action=%s - %s.%s:(%s) - %s => %s" % \
             (self.pk, self.TYPES[self.action], self.model,
              self.field, self.model_id,
@@ -1590,14 +1590,14 @@ class ReputationMetric(models.Model):
     how many reputation points are awarded/deducted for an
     approved/denied audit.
     """
-    instance = models.ForeignKey('Instance')
+    instance = models.ForeignKey('Instance', on_delete=models.CASCADE)
     model_name = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
     direct_write_score = models.IntegerField(null=True, blank=True)
     approval_score = models.IntegerField(null=True, blank=True)
     denial_score = models.IntegerField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s - %s - %s" % (self.instance, self.model_name, self.action)
 
     @staticmethod

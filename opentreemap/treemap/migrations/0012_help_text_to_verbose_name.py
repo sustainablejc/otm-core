@@ -70,6 +70,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='tree',
             name='species',
-            field=models.ForeignKey(verbose_name='Species', blank=True, to='treemap.Species', null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, verbose_name='Species', blank=True, to='treemap.Species', null=True),
         ),
     ]

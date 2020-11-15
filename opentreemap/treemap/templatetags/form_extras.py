@@ -8,7 +8,7 @@ from modgrammar import Grammar, OPTIONAL, G, WORD, OR, ParseError
 from django import template
 from django.template.loader import get_template
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils import dateformat
 from django.utils.translation import ugettext as _
 from django.conf import settings
@@ -278,7 +278,7 @@ def field_type_label_choices(model, field_name, label=None,
         label = label if label else field.verbose_name
         explanation = explanation if explanation else field.help_text
         choices = [{'value': choice[0], 'display_value': choice[1]}
-                   for choice in field.choices]
+                   for choice in field.choices] if field.choices else None
         if choices and field.null:
             choices = [{'value': '', 'display_value': ''}] + choices
     else:

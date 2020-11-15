@@ -10,6 +10,9 @@ from treemap.decorators import classproperty
 from treemap.models import MapFeature, ValidationMixin
 from treemap.ecobenefits import CountOnlyBenefitCalculator
 
+# these are all built-in directly to Django
+from django.db.models import Manager as GeoManager
+
 
 class PolygonalMapFeature(MapFeature):
     area_field_name = 'polygon'
@@ -17,7 +20,7 @@ class PolygonalMapFeature(MapFeature):
 
     polygon = models.MultiPolygonField(srid=3857)
 
-    objects = models.GeoManager()
+    objects = GeoManager()
 
     @classproperty
     def always_writable(cls):
@@ -79,7 +82,7 @@ class PolygonalMapFeature(MapFeature):
 
 
 class Bioswale(PolygonalMapFeature, ValidationMixin):
-    objects = models.GeoManager()
+    objects = GeoManager()
     drainage_area = models.FloatField(
         null=True,
         blank=True,
@@ -141,7 +144,7 @@ class Bioswale(PolygonalMapFeature, ValidationMixin):
 
 
 class RainGarden(PolygonalMapFeature, ValidationMixin):
-    objects = models.GeoManager()
+    objects = GeoManager()
     drainage_area = models.FloatField(
         null=True,
         blank=True,
@@ -203,7 +206,7 @@ class RainGarden(PolygonalMapFeature, ValidationMixin):
 
 
 class RainBarrel(MapFeature):
-    objects = models.GeoManager()
+    objects = GeoManager()
     capacity = models.FloatField(
         verbose_name=_("Capacity"),
         error_messages={'invalid': _("Please enter a number.")})

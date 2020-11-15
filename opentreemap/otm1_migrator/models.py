@@ -25,9 +25,9 @@ class MigrationEvent(models.Model):
 
 
 class AbstractRelic(models.Model):
-    migration_event = models.ForeignKey(MigrationEvent,
+    migration_event = models.ForeignKey(MigrationEvent, on_delete=models.CASCADE,
                                         null=True, blank=True)
-    instance = models.ForeignKey(Instance)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     otm1_model_id = models.IntegerField()
     otm2_model_id = models.IntegerField()
 

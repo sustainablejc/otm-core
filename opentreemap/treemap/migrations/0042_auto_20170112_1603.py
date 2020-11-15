@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mapfeature',
             name='updated_by',
-            field=models.ForeignKey(verbose_name='Last Updated By', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, verbose_name='Last Updated By', blank=True, to=settings.AUTH_USER_MODEL, null=True),
         ),
     ]

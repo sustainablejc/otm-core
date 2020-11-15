@@ -7,7 +7,7 @@ import sass
 import json
 
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
 from django.core.exceptions import ValidationError
@@ -69,7 +69,7 @@ def index(request, instance):
 
 
 def get_map_view_context(request, instance):
-    if request.user and not request.user.is_anonymous():
+    if request.user and not request.user.is_anonymous:
         iuser = request.user.get_effective_instance_user(instance)
         resource_classes = [resource for resource in instance.resource_classes
                             if model_is_creatable(iuser, resource)]
@@ -247,7 +247,7 @@ def public_instances_geojson(request):
 def error_page(status_code):
     template = '%s.html' % status_code
 
-    def inner_fn(request):
+    def inner_fn(request, exception=None):
         reasons = {
             404: _('URL or resource not found'),
             500: _('An unhandled error occured'),

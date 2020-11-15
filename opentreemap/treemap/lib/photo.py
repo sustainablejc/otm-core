@@ -3,7 +3,7 @@
 
 from urllib.parse import urlparse, urlunparse
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 def _drop_querystring(url):

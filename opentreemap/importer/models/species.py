@@ -48,7 +48,7 @@ class SpeciesImportEvent(GenericImportEvent):
     def row_set(self):
         return self.speciesimportrow_set
 
-    def __unicode__(self):
+    def __str__(self):
         return _('Species Import #%s') % self.pk
 
     def status_description(self):
@@ -92,10 +92,10 @@ class SpeciesImportRow(GenericImportRow):
     ))
 
     # Species reference
-    species = models.ForeignKey(Species, null=True, blank=True)
+    species = models.ForeignKey(Species, on_delete=models.CASCADE, null=True, blank=True)
     merged = models.BooleanField(default=False)
 
-    import_event = models.ForeignKey(SpeciesImportEvent)
+    import_event = models.ForeignKey(SpeciesImportEvent, on_delete=models.CASCADE)
 
     class Meta:
         app_label = 'importer'

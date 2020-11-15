@@ -420,6 +420,8 @@ class InstanceTest(OTMTestCase):
 
     def test_url_name_must_be_unique(self):
         make_instance(url_name='philly')
+        import ipdb; ipdb.set_trace() # BREAKPOINT
+        #django.core.exceptions.ValidationError
         self.assertRaises(make_instance, url_name='philly')
 
     def test_has_itree_region_with_nothing(self):

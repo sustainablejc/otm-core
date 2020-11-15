@@ -6,7 +6,7 @@ import re
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.validators import URLValidator, validate_email
 from django.shortcuts import redirect
 from django.utils.translation import ugettext as _

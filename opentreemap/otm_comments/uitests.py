@@ -6,7 +6,7 @@ from time import sleep
 
 from selenium.webdriver.support.wait import WebDriverWait
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from treemap.instance import create_stewardship_udfs
 from treemap.tests.ui import TreemapUITestCase

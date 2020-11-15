@@ -26,8 +26,8 @@ class Migration(migrations.Migration):
                 ('prioritization_params', treemap.json_field.JSONField()),
                 ('scenarios', treemap.json_field.JSONField(null=True, blank=True)),
                 ('currentScenarioId', models.IntegerField(null=True, blank=True)),
-                ('instance', models.ForeignKey(to='treemap.Instance')),
-                ('owner', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('instance', models.ForeignKey(on_delete=models.CASCADE, to='treemap.Instance')),
+                ('owner', models.ForeignKey(on_delete=models.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
     ]
