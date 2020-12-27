@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, EmptyPage
 from django.contrib.auth import login, authenticate
 from django.db import transaction
 from django.dispatch import receiver
+from django.forms.models import model_to_dict
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 from django.shortcuts import get_object_or_404
@@ -60,6 +61,65 @@ def create_user_role(request, instance):
         invite_user_with_email_to_instance(request, email, instance)
 
     return user_roles_list(request, instance)
+
+
+def user_roles_list_invited(request, instance):
+
+    def invite_user_context(invites):
+        for invite in invites:
+            yield {
+                'id': str(invite.pk),
+                'username': invite.email,
+                'role_id': invite.role.pk,
+                'role_name': invite.role.name,
+                'admin': invite.admin,
+            }
+
+    invited_users = instance.instanceinvitation_set \
+        .select_related('role') \
+        .filter(accepted=False)
+
+    return {
+        'invited_users': list(invite_user_context(invited_users)),
+        'instance_roles': list(Role.objects.filter(instance_id=instance.pk).values())
+    }
+
+
+def user_roles_list_active(request, instance):
+
+    def instance_user_context(users):
+        for instance_user in users:
+            user = instance_user.user
+            yield {
+                'id': str(instance_user.pk),
+                'username': user.username,
+                'role_id': instance_user.role.pk,
+                'role_name': instance_user.role.name,
+                'admin': instance_user.admin,
+                'is_owner': does_user_own_instance(instance, user)
+            }
+
+    active_users = instance.instanceuser_set \
+        .select_related('role', 'user') \
+        .exclude(user=User.system_user())
+
+    return {
+        'active_users': list(instance_user_context(active_users)),
+        'instance_roles': list(Role.objects.filter(instance_id=instance.pk).values()),
+    }
+
+
+def user_roles_list_api(request, instance):
+    user_roles = user_roles_list(request, instance)
+
+    user_roles['instance'] = model_to_dict(user_roles['instance'])
+
+    user_roles['paged_instance_users'] = list(user_roles['paged_instance_users'].object_list.values())
+    user_roles['invited_users'] = list(user_roles['invited_users'])
+    user_roles['instance_roles'] = list(user_roles['instance_roles'].values())
+    user_roles['instance_users'] = list(user_roles['instance_users'])
+
+    return user_roles
 
 
 def user_roles_list(request, instance):

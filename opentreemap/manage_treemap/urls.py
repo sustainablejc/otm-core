@@ -28,7 +28,12 @@ urlpatterns = [
     url(r'^photo-review/approve-reject/(?P<action>(approve)|(reject))$',
         routes.approve_or_reject_photos, name='approve_or_reject_photos'),
 
+    url(r'^user-roles-api/$', routes.user_roles_api, name='user_roles'),
     url(r'^user-roles/$', routes.user_roles, name='user_roles'),
+
+    url(r'^user-roles/invited/$', routes.user_roles_invited, name='user_roles_invited'),
+    url(r'^user-roles/active/$', routes.user_roles_active, name='user_roles_active'),
+
     url(r'^user-roles-partial/$', routes.user_roles_partial,
         name='user_roles_partial'),
     url(r'^user-invite/(?P<invite_id>\d+)$', routes.user_invites,
