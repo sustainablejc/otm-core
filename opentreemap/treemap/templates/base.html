@@ -3,6 +3,7 @@
 {% load render_bundle from webpack_loader %}
 {% load instance_config %}
 {% load js_reverse %}
+{% load staticfiles %}
 
 <!DOCTYPE html>
 <!--
@@ -12,6 +13,7 @@
     <meta charset="utf-8">
     <title>{% block title %}OpenTreeMap{% block instance_title %}{% endblock %}{% block page_title %}{% endblock %}{% endblock title %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="{% static 'js/shim/reverse.js' %}"></script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     {% block application_css %}
     {% render_bundle 'js/treemap/base' 'css' %}

@@ -5,7 +5,7 @@ var Webpack = require('webpack'),
     path = require('path'),
     _ = require('lodash'),
     BundleTracker = require('webpack-bundle-tracker'),
-    ExtractTextPlugin = require("extract-text-webpack-plugin"),
+    MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     autoprefixer = require('autoprefixer');
 
 function d(path) {
@@ -54,34 +54,69 @@ var shimmed = {
 
 module.exports = {
     entry: getEntries(),
+    /*
+    externals: {
+        "jquery": "jQuery",
+        //jQuery: "jquery",
+        //jQuery: d("assets/js/vendor/jquery"),
+        //jquery: d("assets/js/vendor/jquery"),
+        "window.jQuery": "jquery",
+        L: "leaflet"
+    },
+    */
     output: {
         filename: '[name].js',
         path: d('static'),
         sourceMapFilename: '[file].map'
     },
     module: {
-        loaders: [{
-            include: [shimmed["bootstrap-datepicker"], shimmed["bootstrap-multiselect"]],
-            loader: "imports?bootstrap"
+        //loaders: [{
+        rules: [
+        {
+            test: /\.js$/,
+            include: [d('opentreemap/frontend/js/src/')],
+            use: ['babel-loader']
+        /*
         }, {
-            test: /\.scss$/,
-            loader: ExtractTextPlugin.extract(['css', 'postcss-loader', 'sass'], {extract: true})
+            include: [shimmed["bootstrap-datepicker"], shimmed["bootstrap-multiselect"]],
+            use: [ {loader: "imports-loader?bootstrap"} ]
+        */
+        }, {
+              test: /\.(sa|sc|c)ss$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    { loader: 'css-loader', options: { sourceMap: true } },
+                    //{ loader: 'postcss-loader', options: { plugins: () => [autoprefixer({ browsers: ['last 2 versions'] })] } },
+                    'sass-loader'
+                ]
+            /*
+            test: /\.(css|scss)$/,
+            use: [
+                //MiniCssExtractPlugin.loader,
+                'style-loader',
+                'css-loader',
+                'postcss-loader',
+                'sass-loader',
+            ]
+            */
         }, {
             test: /\.woff($|\?)|\.woff2($|\?)|\.ttf($|\?)|\.eot($|\?)|\.svg($|\?)/,
-            loader: 'url',
+            use: [ {loader: 'url-loader'}],
         }, {
             test: /\.(jpg|png|gif)$/,
-            loader: 'url?limit=25000',
+            use: [ {loader: 'url-loader?limit=25000'} ],
         }]
     },
     resolve: {
         alias: getAliases(),
         // Look in node_modules, our shared asset 'js/vendor/' and each Django
         // app's 'js/vendor/' for modules that support a module system
-        root: [d("assets/js/vendor"), d("node_modules")].concat(glob.sync(d('opentreemap/*/js/vendor/')))
+        //modules: [d("assets/js/vendor"), d("node_modules")].concat(glob.sync(d('opentreemap/*/js/vendor/')))
+        modules: [d("assets/js/vendor"), d("node_modules")].concat(glob.sync(d('opentreemap/*/js/vendor/')))
+        //roots: [d("assets/js/vendor"), d("node_modules")].concat(glob.sync(d('opentreemap/*/js/vendor/')))
     },
     resolveLoader: {
-        root: d("node_modules")
+        roots: [d("node_modules")]
     },
     plugins: [
         // Provide jquery and Leaflet as global variables, which gets rid of
@@ -89,9 +124,11 @@ module.exports = {
         // NOTE: the test configuration relies on this being the first plugin
         new Webpack.ProvidePlugin({
             jQuery: "jquery",
+            $: 'jquery',
             "window.jQuery": "jquery",
-            L: "leaflet"
+            L: "leaflet",
         }),
+        /*
         new Webpack.optimize.CommonsChunkPlugin({
             // Inlude the treemap/base entry module as part of the common module
             name: "js/treemap/base",
@@ -99,10 +136,9 @@ module.exports = {
             // Chunks are moved to the common bundle if they are used in 2 or more entry bundles
             minChunks: 2,
         }),
-        new ExtractTextPlugin('css/main-[chunkhash].css', {allChunks: true}),
+        new MiniCssExtractPlugin({fiename: 'css/main-[chunkhash].css', {allChunks: true}),
+        */
+        new MiniCssExtractPlugin({filename: 'css/style.css', chunkFilename: "[name].css"}),
         new BundleTracker({path: d('static'), filename: 'webpack-stats.json'})
-    ],
-    postcss: function () {
-        return [autoprefixer];
-    }
+    ]
 };
