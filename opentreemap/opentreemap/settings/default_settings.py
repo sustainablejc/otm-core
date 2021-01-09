@@ -222,6 +222,7 @@ TEMPLATES = [
 MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -294,6 +295,7 @@ INSTALLED_APPS = (
     'django.contrib.postgres',
     'django_js_reverse',
     'webpack_loader',
+    'frontend',
 )
 
 I18N_APPS = (
@@ -412,3 +414,13 @@ if os.environ.get('RECAPTCHA_PUBLIC_KEY', '') != '':
     USE_RECAPTCHA = True
 else:
     USE_RECAPTCHA = False
+
+
+DEFAULT_INSTANCE = 'JerseyCity'
+
+INATURALIST_URL = ''
+
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',
+    'http://localhost:8080'
+)

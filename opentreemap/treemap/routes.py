@@ -48,7 +48,7 @@ index_page = instance_request(misc_views.index)
 
 map_page = do(
     instance_request,
-    ensure_csrf_cookie,
+    #ensure_csrf_cookie,
     render_template('treemap/map.html'),
     misc_views.get_map_view_context)
 

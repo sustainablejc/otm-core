@@ -42,7 +42,7 @@ var shimmed = {
     leafletbing: d('assets/js/shim/leaflet.bing.js'),
     utfgrid: d('assets/js/shim/leaflet.utfgrid.js'),
     typeahead: d('assets/js/shim/typeahead.jquery.js'),
-    bootstrap: d('assets/js/shim/bootstrap.js'),
+    //bootstrap: d('assets/js/shim/bootstrap.js'),
     jqueryFileUpload: d('assets/js/shim/jquery.fileupload.js'),
     jqueryIframeTransport: d('assets/js/shim/jquery.iframe-transport.js'),
     jqueryUiWidget: d('assets/js/shim/jquery.ui.widget.js'),
@@ -85,7 +85,7 @@ module.exports = {
               test: /\.(sa|sc|c)ss$/,
                 use: [
                     MiniCssExtractPlugin.loader,
-                    { loader: 'css-loader', options: { sourceMap: true } },
+                    { loader: 'css-loader', options: { sourceMap: false } },
                     //{ loader: 'postcss-loader', options: { plugins: () => [autoprefixer({ browsers: ['last 2 versions'] })] } },
                     'sass-loader'
                 ]
@@ -118,6 +118,16 @@ module.exports = {
     resolveLoader: {
         roots: [d("node_modules")]
     },
+    optimization: {
+        /*
+        runtimeChunk: 'single',
+        */
+        splitChunks: {
+            chunks: 'all',
+            name: "js/treemap/base-chunk",
+            minChunks: 2,
+        }
+    },
     plugins: [
         // Provide jquery and Leaflet as global variables, which gets rid of
         // most of our shimming needs
@@ -138,7 +148,7 @@ module.exports = {
         }),
         new MiniCssExtractPlugin({fiename: 'css/main-[chunkhash].css', {allChunks: true}),
         */
-        new MiniCssExtractPlugin({filename: 'css/style.css', chunkFilename: "[name].css"}),
+        new MiniCssExtractPlugin({filename: 'css/style-[name].css', chunkFilename: "[name].css"}),
         new BundleTracker({path: d('static'), filename: 'webpack-stats.json'})
     ]
 };

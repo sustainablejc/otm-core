@@ -77,6 +77,7 @@ urlpatterns = root_url + [
     url(instance_pattern + r'/accounts/register/$',
         RegistrationView.as_view(),
         name='instance_registration_register'),
+    url(instance_pattern + r'/ui/', include('frontend.urls')),
     url(instance_pattern + r'/', include('treemap.urls')),
     url(instance_pattern + r'/importer/', include('importer.urls',
                                                   namespace='importer')),
