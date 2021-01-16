@@ -1,10 +1,11 @@
 import _ from 'lodash';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import config from 'treemap/lib/config';
-import { TileLayer } from "react-leaflet";
+import { TileLayer, Marker, Popup } from "react-leaflet";
+import UtfGrid from './UtfGrid';
 
 
-export default function PlotTileLayer(props) {
+export function PlotTileLayer(props) {
     const MAX_ZOOM_OPTION = {maxZoom: 21};
     // Min zoom level for detail layers
     const MIN_ZOOM_OPTION = {minZoom: 15};
@@ -12,16 +13,56 @@ export default function PlotTileLayer(props) {
     const FEATURE_LAYER_OPTION = {zIndex: 4};
 
     const ref = useRef();
-    var options = _.extend({}, MAX_ZOOM_OPTION, FEATURE_LAYER_OPTION);
+    const options = _.extend({}, MAX_ZOOM_OPTION, FEATURE_LAYER_OPTION);
     useEffect(() => {
-        debugger;
+        var t = ref;
     });
-    var noSearchUrl = filterableLayer('treemap_mapfeature', 'png', options, {});
-    return <TileLayer url={noSearchUrl} />;
-};
+    const noSearchUrl = filterableLayer('treemap_mapfeature', 'png', options, {});
+
+    return <TileLayer url={noSearchUrl} {...options} />;
+}
 
 
-export function filterableLayer (table, extension, layerOptions, tilerArgs) {
+export function PlotUtfTileLayer(props) {
+    const MAX_ZOOM_OPTION = {maxZoom: 21};
+    // Min zoom level for detail layers
+    const MIN_ZOOM_OPTION = {minZoom: 15};
+    const [showMarker, setShowMarker] = useState(false);
+    const [latLng, setLatLng] = useState({ lat: null, lng: null});
+
+    const FEATURE_LAYER_OPTION = {zIndex: 4};
+
+    const options = _.extend({resolution: 4}, MAX_ZOOM_OPTION, FEATURE_LAYER_OPTION);
+    const url = getUrlMaker('treemap_mapfeature', 'grid.json')();
+
+    /*
+    const eventHandlers = {
+        click: (event) => {
+            if (event.id == null) {
+                setShowMarker(false);
+                setLatLng({ lat: null, lng: null });
+                return;
+            }
+            setLatLng({ lat: event.latlng.lat, lng: event.latlng.lng });
+            setShowMarker(true);
+        }
+    }
+    */
+
+    const marker = showMarker ? (
+        <Marker position={latLng}>
+            <Popup> TEST POPUP </Popup>
+        </Marker>
+    ) : null;
+
+    //return (<UtfGrid url={url} eventHandlers={eventHandlers} {...options}>
+    return (<UtfGrid url={url} eventHandlers={props.eventHandlers} {...options}>
+        {marker}
+        </UtfGrid>);
+}
+
+
+function filterableLayer (table, extension, layerOptions, tilerArgs) {
     var revToUrl = getUrlMaker(table, extension, tilerArgs),
         noSearchUrl = revToUrl(config.instance.geoRevHash),
         searchBaseUrl = revToUrl(config.instance.universalRevHash);

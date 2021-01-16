@@ -17,7 +17,7 @@ export default class MapMain extends Component {
                 <Col md={2}>LOGO</Col>
                 <Col md={{ span: 6, offset: 4}}>Search Area</Col>
             </Row>
-            <Row>
+            <Row className="subhead">
                 <Col md={4}>Result Numbers</Col>
                 <Col md={{ span:1, offset: 6 }}>Add a Tree</Col>
             </Row>

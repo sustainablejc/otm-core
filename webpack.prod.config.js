@@ -11,7 +11,7 @@ config.resolve.alias.reverse = reversePath;
 
 //config.devtool = false;
 config.devtool = 'eval-cheap-source-map';
-config.mode = 'development';
+//config.mode = 'development';
 
 /*
 config.watch = true;

@@ -23,6 +23,7 @@
     "leaflet": "^1.7.1",
     "leaflet-draw": "~0.4.9",
     "leaflet-pip": "~1.0.0",
+    "leaflet-utfgrid": "^0.3.0",
     "leaflet.gridlayer.googlemutant": "~0.4.3",
     "leaflet.locatecontrol": "^0.62.0",
     "lodash": "^4.17.20",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/plugin-transform-react-jsx": "^7.12.12",
     "@babel/preset-env": "^7.12.11",
     "@babel/preset-react": "^7.12.10",
@@ -65,6 +67,7 @@
     "node-sass": "^4.11.0",
     "postcss": "^8.2.2",
     "postcss-loader": "^4.1.0",
+    "react-dev-tools": "0.0.1",
     "sass": "^1.32.0",
     "sass-loader": "^10.1.0",
     "sass-resources-loader": "^2.1.1",

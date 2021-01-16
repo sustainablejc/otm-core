@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
 import { Container, Col, Row } from 'react-bootstrap';
-import { LayersControl, MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { LayersControl, MapContainer, TileLayer, Marker, Overlay, Popup } from "react-leaflet";
 import ReactLeafletGoogleLayer from 'react-leaflet-google-layer';
 import { createSignature } from '../common/util/ApiRequest';
 import axios from 'axios';
 import config from 'treemap/lib/config';
-import PlotTileLayer from './Layers';
+import { PlotTileLayer } from './Layers';
+import { PlotUtfTileLayer } from './Layers';
 
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
@@ -24,7 +25,7 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const key = 'AIzaSyAWBOB4l7zzDG2-7h-2qm9qdIb2fSOx9GY';
+const key = '';
 
 
 export default class Map extends Component {
@@ -33,11 +34,17 @@ export default class Map extends Component {
         this.state = {
             startingLatitude: null,
             startingLongitude: null,
-            loading: true
+            loading: true,
+            popupInfo: {
+                ids: null,
+                show: false,
+                latLng: { lat: null, lng: null }
+            }
         }
     }
 
     componentDidMount() {
+
         var url = 'http://localhost:8080/api/v2/instance/JerseyCity';
         createSignature(url)
             .then(x => {
@@ -50,7 +57,7 @@ export default class Map extends Component {
                 console.log('Error fetching map');
                 console.log(x);
             });
-        
+
         axios.get('/jerseycity/species/', {withCredential: true})
             .then(x => {
                 //debugger;
@@ -60,7 +67,42 @@ export default class Map extends Component {
     }
 
     render() {
-        const {loading, startingLongitude, startingLatitude} = this.state;
+        const {loading, startingLongitude, startingLatitude, popupInfo} = this.state;
+
+        const utfEventHandlers = {
+            click: (event) => {
+                if (event.id == null) {
+                    this.setState({
+                        popupInfo: {
+                            ids: null,
+                            show: false,
+                            latLng: { lat: null, lng: null }
+                        }
+                    });
+                } else {
+                    this.setState({
+                        popupInfo: {
+                            // FIXME can there be multiple?
+                            ids: [event.id],
+                            show: true,
+                            latLng: { lat: event.latlng.lat, lng: event.latlng.lng }
+                        }
+                    });
+                }
+            }
+        }
+        const popup = popupInfo.show ? (
+            <Popup position={popupInfo.latLng}>
+                <div id="map-feature-content">
+                    <div className="popup-content">
+                        <h4>Red Maple</h4>
+                        <div className="popup-btns">
+                            <a href={`/jerseycity/features/${popupInfo.ids[0]}`} className="btn btn-sm btn-secondary">More Details</a>
+                        </div>
+                    </div>
+                </div>
+            </Popup>
+        ) : null;
 
         if (loading) return (<div>Loading...</div>);
 
@@ -69,6 +111,12 @@ export default class Map extends Component {
             <MapContainer center={[startingLongitude, startingLatitude]} zoom={13} scrollWheelZoom={true}>
                 <LayersControl position='topright'>
                     <LayersControl.BaseLayer checked name='OpenStreetMap'>
+                        <TileLayer
+                            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                    </LayersControl.BaseLayer>
+                    <LayersControl.BaseLayer name='OpenStreetMap2'>
                         <TileLayer
                             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -88,6 +136,8 @@ export default class Map extends Component {
                     </LayersControl.BaseLayer>
                 </LayersControl>
                 <PlotTileLayer />
+                <PlotUtfTileLayer eventHandlers={utfEventHandlers} />
+                {popup}
             </MapContainer>
         </div>
         );
