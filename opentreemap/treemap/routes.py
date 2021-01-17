@@ -155,6 +155,11 @@ map_feature_popup = do(
     render_template('treemap/partials/map_feature_popup.html'),
     feature_views.map_feature_popup)
 
+map_feature_popup_detail = do(
+    instance_request,
+    json_api_call,
+    feature_views.map_feature_popup)
+
 canopy_popup = do(
     instance_request,
     feature_views.canopy_popup)

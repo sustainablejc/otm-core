@@ -8,6 +8,7 @@ import axios from 'axios';
 import config from 'treemap/lib/config';
 import { PlotTileLayer } from './Layers';
 import { PlotUtfTileLayer } from './Layers';
+import { TreePopup } from './TreePopup';
 
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
@@ -92,16 +93,7 @@ export default class Map extends Component {
             }
         }
         const popup = popupInfo.show ? (
-            <Popup position={popupInfo.latLng}>
-                <div id="map-feature-content">
-                    <div className="popup-content">
-                        <h4>Red Maple</h4>
-                        <div className="popup-btns">
-                            <a href={`/jerseycity/features/${popupInfo.ids[0]}`} className="btn btn-sm btn-secondary">More Details</a>
-                        </div>
-                    </div>
-                </div>
-            </Popup>
+            <TreePopup {...popupInfo} />
         ) : null;
 
         if (loading) return (<div>Loading...</div>);

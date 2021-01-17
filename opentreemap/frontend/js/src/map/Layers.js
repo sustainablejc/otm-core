@@ -2,6 +2,7 @@ import _ from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import config from 'treemap/lib/config';
 import { TileLayer, Marker, Popup } from "react-leaflet";
+import TreePopup from './TreePopup';
 import UtfGrid from './UtfGrid';
 
 
@@ -35,30 +36,8 @@ export function PlotUtfTileLayer(props) {
     const options = _.extend({resolution: 4}, MAX_ZOOM_OPTION, FEATURE_LAYER_OPTION);
     const url = getUrlMaker('treemap_mapfeature', 'grid.json')();
 
-    /*
-    const eventHandlers = {
-        click: (event) => {
-            if (event.id == null) {
-                setShowMarker(false);
-                setLatLng({ lat: null, lng: null });
-                return;
-            }
-            setLatLng({ lat: event.latlng.lat, lng: event.latlng.lng });
-            setShowMarker(true);
-        }
-    }
-    */
-
-    const marker = showMarker ? (
-        <Marker position={latLng}>
-            <Popup> TEST POPUP </Popup>
-        </Marker>
-    ) : null;
-
     //return (<UtfGrid url={url} eventHandlers={eventHandlers} {...options}>
-    return (<UtfGrid url={url} eventHandlers={props.eventHandlers} {...options}>
-        {marker}
-        </UtfGrid>);
+    return (<UtfGrid url={url} eventHandlers={props.eventHandlers} {...options} />);
 }
 
 

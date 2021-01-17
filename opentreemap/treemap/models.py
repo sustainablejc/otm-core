@@ -924,6 +924,17 @@ class MapFeature(Convertible, UDFModel, PendingAuditable):
         text = "%s (%s, %s) %s" % (feature_type, x, y, address)
         return text
 
+    def as_dict(self):
+        """
+        Add additional fields to the dictionary representation.
+        This is what gets returned from the API
+        """
+        data = super(MapFeature, self).as_dict()
+        data['title'] = self.title()
+        data['is_editable'] = self.is_editable
+        data['is_plot'] = self.is_plot
+        return data
+
     @classproperty
     def _terminology(cls):
         return {'singular': cls.__name__}

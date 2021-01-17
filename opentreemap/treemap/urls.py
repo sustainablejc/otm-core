@@ -36,6 +36,8 @@ urlpatterns = [
         routes.edit_map_feature_detail, name='map_feature_detail_edit'),
     url(r'^features/(?P<feature_id>\d+)/popup$',
         routes.map_feature_popup, name='map_feature_popup'),
+    url(r'^features/(?P<feature_id>\d+)/popup_detail$',
+        routes.map_feature_popup_detail, name='map_feature_popup_detail'),
     url(r'^canopy-popup$', routes.canopy_popup, name='canopy_popup'),
     url(r'^features/(?P<feature_id>\d+)/trees/(?P<tree_id>\d+)/$',
         routes.delete_tree, name='delete_tree'),

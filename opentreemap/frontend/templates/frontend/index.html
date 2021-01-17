@@ -3,6 +3,18 @@
 {% load render_bundle from webpack_loader %}
 
 {% block content %}
+<script>
+    window.django = {
+        csrf: "{{ csrf_token }}",
+        instance_url: "{{ request.instance.url_name }}",
+        user: {
+            username: "{{ request.user.username }}",
+            full_name: "{{ request.user.get_full_name }}",
+            last_login: "{{ request.user.last_login }}",
+            is_authenticated: "{{ request.user.is_authenticated|yesno:"true,false" }}" == "true"
+        }
+    };
+</script>
   <div id="app"></div>
   {% render_bundle 'js/frontend/index' %}
 {% endblock content %}
