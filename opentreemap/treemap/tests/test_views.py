@@ -154,7 +154,7 @@ class BoundaryViewTest(ViewTestCase):
             self.instance,
             boundary.pk)
 
-        self.assertEqual(response.content,
+        self.assertEqual(response.content.decode('utf-8'),
                          boundary.geom.transform(4326, clone=True).geojson)
 
         self._assert_response_is_srid_3857_distance(response, distance)
@@ -168,7 +168,7 @@ class BoundaryViewTest(ViewTestCase):
             self.instance,
             boundary.pk)
 
-        self.assertEqual(response.content,
+        self.assertEqual(response.content.decode('utf-8'),
                          boundary.geom.transform(4326, clone=True).geojson)
 
         self._assert_response_is_srid_3857_distance(response, distance)
@@ -177,7 +177,7 @@ class BoundaryViewTest(ViewTestCase):
         distance3857 = 1.0
         point3857 = Point(distance3857, distance3857, srid=3857)
         point4326 = point3857.transform(4326, clone=True)
-        n = point4326.get_x()
+        n = point4326.x
         request_dict = {
             'polygon': [[n, n], [n, n+1], [n+1, n+1], [n+1, n], [n, n]]
         }
@@ -193,7 +193,7 @@ class BoundaryViewTest(ViewTestCase):
             self.instance,
             boundary_id)
 
-        self.assertEqual(gjs_response.content,
+        self.assertEqual(gjs_response.content.decode('utf-8'),
                          anonymous_boundary.geom.transform(
                              4326, clone=True).geojson)
 
@@ -226,8 +226,8 @@ class BoundaryViewTest(ViewTestCase):
         json_response = json.loads(response.content)
         response_upper_left = Point(json_response['coordinates'][0][0][0],
                                     srid=4326)
-        self.assertAlmostEqual(response_upper_left.get_x(),
-                               upper_left_4326.get_x())
+        self.assertAlmostEqual(response_upper_left.x,
+                               upper_left_4326.x)
 
 
 class TreePhotoTestCase(LocalMediaTestCase):
@@ -1589,21 +1589,21 @@ class RecentEditsViewTest(ViewTestCase):
                 "ref": None,
                 "action": Audit.Type.Insert,
                 "previous_value": None,
-                "current_value": "water",
-                "requires_auth": False,
-                "user_id": self.commander.pk,
-                "instance_id": self.instance.pk,
-                "field": "udf:action"
-            }, {
-                "model": "udf:%s" % cudf.pk,
-                "ref": None,
-                "action": Audit.Type.Insert,
-                "previous_value": None,
                 "current_value": "343",
                 "requires_auth": False,
                 "user_id": self.commander.pk,
                 "instance_id": self.instance.pk,
                 "field": "udf:height"
+            }, {
+                "model": "udf:%s" % cudf.pk,
+                "ref": None,
+                "action": Audit.Type.Insert,
+                "previous_value": None,
+                "current_value": "water",
+                "requires_auth": False,
+                "user_id": self.commander.pk,
+                "instance_id": self.instance.pk,
+                "field": "udf:action"
             }],
             user=self.officer)
 
@@ -1891,12 +1891,12 @@ class SettingsJsViewTests(ViewTestCase):
     @override_settings(TILE_HOST=None)
     def test_none_tile_hosts_omits_tilehosts_setting(self):
         self.assertNotInResponse('otm.settings.tileHosts',
-                                 self.get_response())
+                                 self.get_response().content.decode('utf-8'))
 
     @override_settings(TILE_HOST='{s}.a')
     def test_single_tile_host_in_tilehosts_setting(self):
         self.assertInResponse('otm.settings.tileHost = "{s}.a";',
-                              self.get_response())
+                              self.get_response().content.decode('utf-8'))
 
 
 class InstanceSettingsJsViewTests(SettingsJsViewTests):

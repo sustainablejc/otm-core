@@ -128,6 +128,7 @@ def add_anonymous_boundary(request):
 
 def boundary_autocomplete(request, instance):
     max_items = request.GET.get('max_items', None)
+    max_items = int(max_items) if max_items else None
 
     boundaries = instance.boundaries \
                          .filter(searchable=True) \
@@ -144,6 +145,7 @@ def boundary_autocomplete(request, instance):
 
 def species_list(request, instance):
     max_items = request.GET.get('max_items', None)
+    max_items = int(max_items) if max_items else None
 
     species_qs = instance.scope_model(Species)\
                          .order_by('common_name')\

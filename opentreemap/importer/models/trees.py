@@ -6,6 +6,7 @@ import json
 from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.db.models.functions import Distance
 from django.utils.translation import ugettext as _
 from django.db import transaction
 
@@ -347,7 +348,7 @@ class TreeImportRow(GenericImportRow):
                            .exclude(pk__in=already_committed)\
                            .filter(geom__intersects=nearby_bbox)
 
-        nearby = nearby.distance(point).order_by('distance')[:5]
+        nearby = nearby.annotate(distance=Distance('geom', point)).order_by('distance')[:5]
 
         if len(nearby) > 0:
             flds = (fields.trees.POINT_X, fields.trees.POINT_Y)

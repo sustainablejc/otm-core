@@ -4,7 +4,7 @@
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
-from django.contrib.auth import logout
+from django.contrib.auth.views import LogoutView
 from django.views.generic import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
@@ -48,7 +48,7 @@ urlpatterns = [
     # The profile view is handled specially by redirecting to
     # the page of the currently logged in user
     url(r'^accounts/profile/$', routes.profile_to_user_page, name='profile'),
-    url(r'^accounts/logout/$', logout, {'next_page': '/'}),
+    url(r'^accounts/logout/$', LogoutView.as_view(), name='logout'),
     url(r'^accounts/forgot-username/$', routes.forgot_username,
         name='forgot_username'),
     url(r'^accounts/resend-activation-email/$', routes.resend_activation_email,
@@ -95,7 +95,7 @@ if settings.EXTRA_URLS:
     ] + urlpatterns
 
 if settings.DEBUG:
-    urlpatterns = [url(r'^admin/', include(admin.site.urls))] + urlpatterns
+    urlpatterns = [url(r'^admin/', admin.site.urls)] + urlpatterns
 
 handler404 = 'treemap.routes.error_404_page'
 handler500 = 'treemap.routes.error_500_page'

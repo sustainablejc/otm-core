@@ -278,7 +278,7 @@ def field_type_label_choices(model, field_name, label=None,
         label = label if label else field.verbose_name
         explanation = explanation if explanation else field.help_text
         choices = [{'value': choice[0], 'display_value': choice[1]}
-                   for choice in field.choices] if field.choices else None
+                   for choice in field.choices] if field.choices else []
         if choices and field.null:
             choices = [{'value': '', 'display_value': ''}] + choices
     else:

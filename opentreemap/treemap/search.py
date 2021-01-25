@@ -116,14 +116,23 @@ class FilterContext(Q):
             del kwargs['basekey']
         else:
             self.basekeys = set()
-
         super(FilterContext, self).__init__(*args, **kwargs)
 
     def add(self, thing, conn):
         if thing.basekeys:
             self.basekeys = self.basekeys | thing.basekeys
 
-        return super(FilterContext, self).add(thing, conn)
+        q = super(FilterContext, self).add(thing, conn)
+        q.basekeys = self.basekeys
+        return q
+
+    def __and__(self, other):
+        """
+        Under the hood, this does a deepcopy, which does not preserve attributes
+        """
+        q = super(FilterContext, self).__and__(other)
+        q.basekeys = self.basekeys
+        return q
 
 
 def convert_filter_units(instance, filter_dict):

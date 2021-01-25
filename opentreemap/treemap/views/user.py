@@ -10,7 +10,7 @@ from django.contrib.sites.requests import RequestSite
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Length
+from django.db.models.functions import Length, Lower
 from django.http import HttpResponseRedirect
 from django.http.request import QueryDict
 from django.shortcuts import render, get_object_or_404
@@ -252,7 +252,7 @@ def users(request, instance):
 
     users_qs = InstanceUser.objects \
                            .filter(instance=instance)\
-                           .order_by('user__username')\
+                           .order_by(Lower('user__username'))\
                            .values('user_id', 'user__username',
                                    'user__first_name', 'user__last_name',
                                    'user__make_info_public')
